@@ -66,3 +66,6 @@ end_byte    pop     R13
             pop     R14                     ; Grab original R14 off stack
             ret
 
+i2c_ack_poll
+            bis.b   #BIT4, &P2OUT
+            
