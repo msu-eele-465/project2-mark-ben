@@ -2,7 +2,6 @@
 ; Include files
             .cdecls C,LIST,"msp430.h"  ; Include device header file
 
-            .include "delay.asm"
             .include "basicops.asm"
 ;-------------------------------------------------------------------------------
 
@@ -49,7 +48,7 @@ Interrupts  bic.w	#CCIFG, &TB0CCTL0  					;Enable overflow interupt TB0
 main:
 
             xor.b   #BIT6, &P6OUT
-            call    #i2c_delay
+            ;call    #i2c_delay
             
             
             
