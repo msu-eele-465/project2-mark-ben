@@ -71,5 +71,24 @@ end_byte    pop     R13
             ret
 
 i2c_ack_poll
-            bis.b   #BIT4, &P2OUT
+
+            bic.b   #BIT5, &P2OUT           ; SCL low
+            call    #i2c_delay      
+            bis.b   #BIT4, &P2OUT           ; SDA high
+
+            bis.b   #BIT4, &P2DIR           ; SDA to input
+
+            call    #i2c_delay
+            bis.b   #BIT5, &P2OUT           ; Clock high            
+            call    #i2c_delay
+
+            ;cmp     #1, &P2OUT
+            call    #i2c_delay
+
+            jmp      ack_received
+
+ack_received
+            ret
+
+
             
