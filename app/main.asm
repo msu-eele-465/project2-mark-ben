@@ -27,6 +27,12 @@ SetupP1     bic.b   #BIT0,&P1OUT            ; Clear P1.0 output
 SetupP6     bic.b   #BIT6,&P6OUT
             bis.b   #BIT6,&P6DIR
 
+SetupP2     bic.b   #BIT4,&P2OUT
+            bis.b   #BIT4,&P2DIR
+
+            bic.b   #BIT5,&P2OUT
+            bis.b   #BIT5,&P2DIR
+
 
 TimerB0     bis.w	#TBCLR, &TB0CTL					;TB0
 		    bis.w 	#TBSSEL__SMCLK, &TB0CTL			;Small Clock Counter
@@ -47,9 +53,15 @@ Interrupts  bic.w	#CCIFG, &TB0CCTL0  					;Enable overflow interupt TB0
 
 main:
 
-            xor.b   #BIT6, &P6OUT
-            ;call    #i2c_delay
+            mov.b   #156, R15
             
+            call    #i2c_start
+            call    #i2c_tx_byte
+            call    #i2c_stop
+            
+            mov.w   #50000, R14
+main_delay  dec.w   R14
+            jnz     main_delay
             
             
             jmp main
