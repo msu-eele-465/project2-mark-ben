@@ -57,7 +57,18 @@ main:
             
             call    #i2c_start
             call    #i2c_tx_byte
+
+            call    #i2c_ack_poll
+            mov.b   #156, R15
+            call    #i2c_tx_byte
+
+            call    #i2c_ack_poll
+            mov.b   #156, R15
+            call    #i2c_tx_byte
+            
+            call    #i2c_ack_poll
             call    #i2c_stop
+
             
             mov.w   #50000, R14
 main_delay  dec.w   R14
