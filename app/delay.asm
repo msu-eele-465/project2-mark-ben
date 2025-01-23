@@ -10,7 +10,7 @@
 
 i2c_delay:
 
-            mov.w   #3, R14
+            mov.w   #3, R14                 ; 25 us delay (actual 24.8 us)
 
 delay:
             dec     R14
