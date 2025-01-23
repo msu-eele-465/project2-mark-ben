@@ -16,7 +16,7 @@ i2c_stop:
             bis.b   #BIT5,&P2OUT            ; Bring clock back high
             call    #i2c_delay
             bis.b   #BIT4,&P2OUT            ; Bring data high to signify stop
-            call    #i2_delay
+            call    #i2c_delay
             ret
 
 
