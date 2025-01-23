@@ -8,7 +8,7 @@
 
 
 i2c_start:
-            bis.b   #BIT4,&P2OUT            ; Bring data line low
+            bic.b   #BIT4,&P2OUT            ; Bring data line low
             call    #i2c_delay
             ret
 
