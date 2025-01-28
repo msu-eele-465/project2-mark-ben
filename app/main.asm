@@ -27,10 +27,11 @@ SetupP1     bic.b   #BIT0,&P1OUT            ; Clear P1.0 output
 SetupP6     bic.b   #BIT6,&P6OUT
             bis.b   #BIT6,&P6DIR
 
-SetupP2     bic.b   #BIT4,&P2OUT
-            bis.b   #BIT4,&P2DIR
+SetupP2     bis.b   #BIT4,&P2OUT
+            bis.b   #BIT4,&P2REN            ; Enable pullup resistor
+            bic.b   #BIT4,&P2DIR
 
-            bic.b   #BIT5,&P2OUT
+            bis.b   #BIT5,&P2OUT
             bis.b   #BIT5,&P2DIR
 
 
@@ -58,19 +59,19 @@ main:
             call    #i2c_start
             call    #i2c_tx_byte
 
-            call    #i2c_ack_poll
+            call    #i2c_rx_ack
             mov.b   #156, R15
             call    #i2c_tx_byte
 
-            call    #i2c_ack_poll
+            call    #i2c_rx_ack
             mov.b   #156, R15
             call    #i2c_tx_byte
             
-            call    #i2c_ack_poll
+            call    #i2c_rx_ack
             call    #i2c_stop
 
             
-            mov.w   #50000, R14
+            mov.w   #5000, R14
 main_delay  dec.w   R14
             jnz     main_delay
             

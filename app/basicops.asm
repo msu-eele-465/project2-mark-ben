@@ -6,20 +6,29 @@
             .retain                         ; Ensure current section gets linked
             .retainrefs
 
+data_low    .macro 
+            bic.b   #BIT4,&P2OUT            ; Bring data line low
+            bis.b   #BIT4,&P2DIR            ; Set data to output
+            .endm
+
+data_high   .macro 
+            bic.b   #BIT4,&P2DIR            ; Set data to input
+            bis.b   #BIT4,&P2OUT            ; Make sure resistor is pullup
+            .endm
 
 i2c_start:
-            bic.b   #BIT4,&P2OUT            ; Bring data line low
+            data_low                        ; Bring data line low
             call    #i2c_delay
             ret
 
 i2c_stop:   
             bic.b   #BIT5,&P2OUT            ; Bring clock low
             call    #i2c_delay
-            bic.b   #BIT4,&P2OUT            ; Bring data low if not already
+            data_low                        ; Bring data line low if not already
             call    #i2c_delay
             bis.b   #BIT5,&P2OUT            ; Bring clock back high
             call    #i2c_delay
-            bis.b   #BIT4,&P2OUT            ; Bring data high to signify stop
+            data_high                       ; Bring data high to signify stop
             call    #i2c_delay
             ret
 
@@ -31,9 +40,9 @@ i2c_tx_bit:
 
             cmp     #0,R15                  ; Check data passed
             jz      data_zero
-            bis.b   #BIT4,&P2OUT            ; Set data high if passed 1
+            data_high                       ; Bring data high if passed 1
             jmp     data_one
-data_zero   bic.b   #BIT4,&P2OUT            ; Set data low if passed 0
+data_zero   data_low                        ; Bring data line low if passed 0
 data_one    call    #i2c_delay
             
             bis.b   #BIT5,&P2OUT            ; Bring clock back high
@@ -76,9 +85,9 @@ i2c_rx_byte:
             push    R13
 
             mov.b   #8, R13                 ; Bit Counter
-            bic.b   R14
+            mov.w   #0,R14
 
-next_bit
+next_bit_rx
             bic.b   #BIT5, &P2OUT           ; SCL low
             call    #i2c_delay
             bis.b   #BIT5, &P2OUT           ; SCL high for read
@@ -88,7 +97,7 @@ next_bit
             mov.b   #0, R15
             jmp     store_bit
 
-bit_one
+bit_one_rx
             mov.b   #1, R15
 
 store_bit
@@ -105,16 +114,12 @@ store_bit
 
 i2c_rx_ack:  
 
-            push    R14
-            push    R13
             bic.b   #BIT5, &P2OUT           ; SCL low
             call    #i2c_delay      
-            bis.b   #BIT4, &P2OUT           ; SDA high
-
-            bis.b   #BIT4, &P2DIR           ; SDA to input
+            data_high                       ; Bring data high
 
             call    #i2c_delay
-            bic.b   #BIT5, &P2OUT           ; Clock low            
+            bis.b   #BIT5, &P2OUT           ; Clock high            
             call    #i2c_delay
 
             cmp     #BIT4, &P2IN            ; Check if SDA is low
@@ -124,44 +129,39 @@ i2c_rx_ack:
             
 
 ack_received
-            mov.b   #0, R14
-            jmp     end_ack
+            mov.b   #0, R15
+            jmp     ack_end
 nack_received
-            mov.b   #1, R14
-            jmp     #i2c_stop
+            mov.b   #1, R15
+            ;jmp     i2c_stop               ; Bring back maybe?
 
 ack_end     
-            bic.b   #BIT4, &P2DIR           ; Reset SDA to output mode
-
-            pop     R14
-            pop     R13
+            ;bic.b   #BIT4, &P2DIR           ; Reset SDA to output mode
+            call    #i2c_delay
             ret
 
 i2c_tx_ack:
-            push    R14
-            push    R13
 
-            cmp     #0, R14
+            cmp     #0, R15
             jz      send_ack
             
             jmp     send_nack
 
 send_ack    
-            bic.b   #BIT4, &P2OUT       ; Clear SDA line if R14 low
+            data_low                        ; Bring data line low if R14 low
             jmp     send_end
 
 send_nack
-            bis.b   #BIT4, &P2OUT       ; Set SDA line if R14 high
-            bic.b   #BIT5, &P2OUT       ; Clock low
+            data_high                       ; Bring data high if R14 high
+            
+send_end    bic.b   #BIT5, &P2OUT       ; Clock low
+            call    #i2c_delay
             call    #i2c_delay
             bis.b   #BIT5, &P2OUT       ; Clock high
             call    #i2c_delay
-            bic.b   #BIT5, &P2OUT       ; Clock low
-         
-
-send_end    
-            pop     R13
-            pop     R14
+            call    #i2c_delay
+             
+            data_high
             ret
 
 
@@ -173,15 +173,15 @@ i2c_write:
             call    #i2c_start
             call    #i2c_tx_byte
 
-            call    #i2c_ack_poll
+            call    #i2c_rx_ack
             mov.b   #156, R15
             call    #i2c_tx_byte
 
-            call    #i2c_ack_poll
+            call    #i2c_rx_ack
             mov.b   #156, R15
             call    #i2c_tx_byte
             
-            call    #i2c_ack_poll
+            call    #i2c_rx_ack
             call    #i2c_stop
 
 i2c_read:
