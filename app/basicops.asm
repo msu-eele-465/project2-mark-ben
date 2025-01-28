@@ -70,8 +70,43 @@ end_byte    pop     R13
             pop     R14                     ; Grab original R14 off stack
             ret
 
-i2c_ack_poll
+i2c_rx_byte:
 
+            push    R14
+            push    R13
+
+            mov.b   #8, R13                 ; Bit Counter
+            bic.b   R14
+
+next_bit
+            bic.b   #BIT5, &P2OUT           ; SCL low
+            call    #i2c_delay
+            bis.b   #BIT5, &P2OUT           ; SCL high for read
+            call    #i2c_delay
+            cmp     #BIT4, &P2IN            ; Check SDA for 1 or 0
+            jnz     bit_one
+            mov.b   #0, R15
+            jmp     store_bit
+
+bit_one
+            mov.b   #1, R15
+
+store_bit
+            rlc.b   R14
+            bis.b   R15, R14
+
+            dec     R13
+            jnz     next_bit
+
+            pop     R13
+            pop     R14
+            ret
+
+
+i2c_rx_ack:  
+
+            push    R14
+            push    R13
             bic.b   #BIT5, &P2OUT           ; SCL low
             call    #i2c_delay      
             bis.b   #BIT4, &P2OUT           ; SDA high
@@ -79,16 +114,76 @@ i2c_ack_poll
             bis.b   #BIT4, &P2DIR           ; SDA to input
 
             call    #i2c_delay
-            bis.b   #BIT5, &P2OUT           ; Clock high            
+            bic.b   #BIT5, &P2OUT           ; Clock low            
             call    #i2c_delay
 
-            ;cmp     #1, &P2OUT
-            call    #i2c_delay
+            cmp     #BIT4, &P2IN            ; Check if SDA is low
+            jz      ack_received            ; If low, ack received
+            jnz     nack_received           ; If high, nack received
 
-            jmp      ack_received
+            
 
 ack_received
+            mov.b   #0, R14
+            jmp     end_ack
+nack_received
+            mov.b   #1, R14
+            jmp     #i2c_stop
+
+ack_end     
+            bic.b   #BIT4, &P2DIR           ; Reset SDA to output mode
+
+            pop     R14
+            pop     R13
             ret
 
+i2c_tx_ack:
+            push    R14
+            push    R13
+
+            cmp     #0, R14
+            jz      send_ack
+            
+            jmp     send_nack
+
+send_ack    
+            bic.b   #BIT4, &P2OUT       ; Clear SDA line if R14 low
+            jmp     send_end
+
+send_nack
+            bis.b   #BIT4, &P2OUT       ; Set SDA line if R14 high
+            bic.b   #BIT5, &P2OUT       ; Clock low
+            call    #i2c_delay
+            bis.b   #BIT5, &P2OUT       ; Clock high
+            call    #i2c_delay
+            bic.b   #BIT5, &P2OUT       ; Clock low
+         
+
+send_end    
+            pop     R13
+            pop     R14
+            ret
+
+
+
+
+i2c_write:
+            mov.b   #156, R15
+            
+            call    #i2c_start
+            call    #i2c_tx_byte
+
+            call    #i2c_ack_poll
+            mov.b   #156, R15
+            call    #i2c_tx_byte
+
+            call    #i2c_ack_poll
+            mov.b   #156, R15
+            call    #i2c_tx_byte
+            
+            call    #i2c_ack_poll
+            call    #i2c_stop
+
+i2c_read:
 
             
