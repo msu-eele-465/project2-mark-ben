@@ -54,21 +54,38 @@ Interrupts  bic.w	#CCIFG, &TB0CCTL0  					;Enable overflow interupt TB0
 
 main:
 
-            mov.b   #156, R15
+            ;mov.b   #156, R15
             
+            ;call    #i2c_start
+            ;call    #i2c_tx_byte
+
+            ;call    #i2c_rx_ack
+            ;mov.b   #156, R15
+            ;call    #i2c_tx_byte
+
+            ;call    #i2c_rx_ack
+            ;mov.b   #156, R15
+            ;call    #i2c_tx_byte
+            
+            ;call    #i2c_rx_ack
+            ;call    #i2c_stop
+
+            mov.b   #3, R15
             call    #i2c_start
             call    #i2c_tx_byte
+            call    #i2c_rx_ack
 
-            call    #i2c_rx_ack
-            mov.b   #156, R15
-            call    #i2c_tx_byte
+            call    #i2c_rx_byte
+            mov.w   #0,R15          ; Send ack
+            call    #i2c_tx_ack
 
-            call    #i2c_rx_ack
-            mov.b   #156, R15
-            call    #i2c_tx_byte
-            
-            call    #i2c_rx_ack
+            call    #i2c_rx_byte
+            mov.w   #1,R15          ; Send Nack
+            call    #i2c_tx_ack
             call    #i2c_stop
+
+
+
 
             
             mov.w   #5000, R14

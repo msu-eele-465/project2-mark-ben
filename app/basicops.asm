@@ -13,6 +13,7 @@ data_low    .macro
 
 data_high   .macro 
             bic.b   #BIT4,&P2DIR            ; Set data to input
+            ;bis.b   #BIT4,&P2REN
             bis.b   #BIT4,&P2OUT            ; Make sure resistor is pullup
             .endm
 
@@ -88,24 +89,37 @@ i2c_rx_byte:
             mov.w   #0,R14
 
 next_bit_rx
+            push R14
+            push R13
+
             bic.b   #BIT5, &P2OUT           ; SCL low
+            call    #i2c_delay
+            data_high
             call    #i2c_delay
             bis.b   #BIT5, &P2OUT           ; SCL high for read
             call    #i2c_delay
             cmp     #BIT4, &P2IN            ; Check SDA for 1 or 0
-            jnz     bit_one
+            jnz     bit_one_rx
             mov.b   #0, R15
             jmp     store_bit
 
 bit_one_rx
             mov.b   #1, R15
 
+
 store_bit
+            call #i2c_delay
+            pop R13
+            pop R14
+
+
             rlc.b   R14
             bis.b   R15, R14
 
             dec     R13
-            jnz     next_bit
+            jnz     next_bit_rx
+
+            mov.b   R14,R15
 
             pop     R13
             pop     R14
@@ -142,6 +156,9 @@ ack_end
 
 i2c_tx_ack:
 
+            bic.b   #BIT5, &P2OUT       ; Clock low
+            call    #i2c_delay
+
             cmp     #0, R15
             jz      send_ack
             
@@ -154,14 +171,11 @@ send_ack
 send_nack
             data_high                       ; Bring data high if R14 high
             
-send_end    bic.b   #BIT5, &P2OUT       ; Clock low
-            call    #i2c_delay
+send_end    
             call    #i2c_delay
             bis.b   #BIT5, &P2OUT       ; Clock high
             call    #i2c_delay
             call    #i2c_delay
-             
-            data_high
             ret
 
 
