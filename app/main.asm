@@ -28,7 +28,7 @@ SetupP6     bic.b   #BIT6,&P6OUT
             bis.b   #BIT6,&P6DIR
 
 SetupP2     bis.b   #BIT4,&P2OUT
-            bis.b   #BIT4,&P2REN            ; Enable pullup resistor
+            bic.b   #BIT4,&P2REN            ; Disable pullup resistor
             bic.b   #BIT4,&P2DIR
 
             bis.b   #BIT5,&P2OUT
@@ -54,23 +54,25 @@ Interrupts  bic.w	#CCIFG, &TB0CCTL0  					;Enable overflow interupt TB0
 
 main:
 
-            ;mov.b   #156, R15
+            mov.b   #0D0h, R15                       ; I2C device address (Write)
             
-            ;call    #i2c_start
-            ;call    #i2c_tx_byte
+            call    #i2c_start
+            call    #i2c_tx_byte
 
-            ;call    #i2c_rx_ack
-            ;mov.b   #156, R15
-            ;call    #i2c_tx_byte
-
-            ;call    #i2c_rx_ack
-            ;mov.b   #156, R15
-            ;call    #i2c_tx_byte
+            call    #i2c_rx_ack
+            mov.b   #0, R15                         ; RTC seconds address
+            call    #i2c_tx_byte
             
-            ;call    #i2c_rx_ack
-            ;call    #i2c_stop
+            call    #i2c_rx_ack
+            call    #i2c_stop
 
-            mov.b   #3, R15
+
+            mov.w   #1000, R14
+mid_delay   dec.w   R14
+            jnz     mid_delay
+
+
+            mov.b   #0D1h, R15                      ; I2C address (Read)
             call    #i2c_start
             call    #i2c_tx_byte
             call    #i2c_rx_ack

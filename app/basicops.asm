@@ -14,7 +14,7 @@ data_low    .macro
 data_high   .macro 
             bic.b   #BIT4,&P2DIR            ; Set data to input
             ;bis.b   #BIT4,&P2REN
-            bis.b   #BIT4,&P2OUT            ; Make sure resistor is pullup
+            ;bis.b   #BIT4,&P2OUT            ; Make sure resistor is pullup
             .endm
 
 ;------------------------------------i2c_start--------------------------------------------
