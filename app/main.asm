@@ -54,6 +54,7 @@ Interrupts  bic.w	#CCIFG, &TB0CCTL0  					;Enable overflow interupt TB0
 
 main:
 
+; ----------------------------- Time Reading ---------------------------------------------------
             mov.b   #0D0h, R15                       ; I2C device address (Write)
             
             call    #i2c_start
@@ -82,14 +83,52 @@ mid_delay   dec.w   R14
             call    #i2c_tx_ack
 
             call    #i2c_rx_byte
+            mov.w   #0,R15          ; Send ack
+            call    #i2c_tx_ack
+
+            call    #i2c_rx_byte
             mov.w   #1,R15          ; Send Nack
             call    #i2c_tx_ack
             call    #i2c_stop
 
-
-
-
+; ----------------------------- Time Reading END ---------------------------------------------------
+            mov.w   #1000, R14
+main_delay_1  dec.w   R14
+            jnz     main_delay_1
+; ----------------------------- Temp Reading -------------------------------------------------------
+            mov.b   #0D0h, R15                       ; I2C device address (Write)
             
+            call    #i2c_start
+            call    #i2c_tx_byte
+
+            call    #i2c_rx_ack
+            mov.b   #011h, R15                         ; RTC seconds address
+            call    #i2c_tx_byte
+            
+            call    #i2c_rx_ack
+            call    #i2c_stop
+
+
+            mov.w   #1000, R14
+mid_delay_1   dec.w   R14
+            jnz     mid_delay_1
+
+
+            mov.b   #0D1h, R15                      ; I2C address (Read)
+            call    #i2c_start
+            call    #i2c_tx_byte
+            call    #i2c_rx_ack
+
+            call    #i2c_rx_byte
+            mov.w   #0,R15          ; Send ack
+            call    #i2c_tx_ack
+
+            call    #i2c_rx_byte
+            mov.w   #1,R15          ; Send Nack
+            call    #i2c_tx_ack
+            call    #i2c_stop
+; ----------------------------- Temp Reading END -------------------------------------------------------
+
             mov.w   #5000, R14
 main_delay  dec.w   R14
             jnz     main_delay
